@@ -70,9 +70,9 @@ def starsID(imgBW,nearNeighbors=4,backThresh=125,starThresh=125,kernel=(5,5)):
     
     numStars = len(starList)
     
-    stars = []
+    starShapes = []
     for star in starList:
         starShape = [imgBW[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
-        stars.append(starShape)
+        starShapes.append(starShape)
     
-    return [imgStars,imgThresh,starList,stars,numStars]
+    return [imgStars,imgThresh,starList,starShapes,numStars]
