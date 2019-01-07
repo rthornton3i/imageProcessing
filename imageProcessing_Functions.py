@@ -1,4 +1,3 @@
-#import cv2 as cv
 from PIL import Image as im
 import numpy as np
 #import matplotlib.pyplot as plt
@@ -25,21 +24,21 @@ def imgBandW(img):
 
 #Threshold
 def imgThreshold(imgBW,lowVal=0,highVal=255):
-	imgThresh = imgBW
-	imgSize = np.shape(imgBW)
+	tempImg = imgBW
+	imgSize = np.shape(tempImg)
 	
 	for row in range(imgSize[0]):
 		for colm in range(imgSize[1]):
-			if imgBW[row,colm] >= highVal:
+			if tempImg[row,colm] >= highVal:
 				pixVal = 255
-			elif imgBW[row,colm] <= lowVal:
+			elif tempImg[row,colm] <= lowVal:
 				pixVal = 0
 			else:
-				pixVal = imgBW[row,colm]
+				pixVal = tempImg[row,colm]
 			
-			imgThresh[row,colm] = pixVal
+			tempImg[row,colm] = pixVal
 	
-	return imgThresh
+	return tempImg
 
 #Flatten
 def imgFlatten(img,dims):

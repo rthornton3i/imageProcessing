@@ -1,5 +1,4 @@
-#import cv2 as cv
-from PIL import Image as im
+#from PIL import Image as im
 import numpy as np
 #import matplotlib.pyplot as plt
 
@@ -17,8 +16,7 @@ def starsID(imgBW,nearNeighbors=4,backThresh=100,starThresh=250,kernel=(5,5)):
     imgBW[:,0:kHorz-1] = 0
     imgBW[:,-kHorz:-1] = 0
     
-    imgThresh = ipf.imgThreshold(imgBW,backThresh,255)
-    imgStars = ipf.imgThreshold(imgBW,starThresh,starThresh)
+    imgThresh = ipf.imgThreshold(imgBW,lowVal=backThresh)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
     near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
@@ -77,5 +75,8 @@ def starsID(imgBW,nearNeighbors=4,backThresh=100,starThresh=250,kernel=(5,5)):
     for star in starList:
         starShape = [imgBW[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
         starShapes.append(starShape)
+    
+#    imgStars = ipf.imgThreshold(imgBW,lowVal=starThresh,highVal=starThresh)
+    imgStars = []
     
     return [imgStars,imgThresh,starList,starShapes,numStars]
