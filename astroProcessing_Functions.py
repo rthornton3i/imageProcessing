@@ -1,9 +1,12 @@
-import cv2 as cv
+#import cv2 as cv
+from PIL import Image as im
 import numpy as np
 #import matplotlib.pyplot as plt
 
+import imageProcessing_Functions as ipf
+
 #Number and Identify Stars
-def starsID(imgBW,nearNeighbors=4,backThresh=125,starThresh=125,kernel=(5,5)):
+def starsID(imgBW,nearNeighbors=4,backThresh=100,starThresh=250,kernel=(5,5)):
     imgSize = np.shape(imgBW)
     
     kVert = int((kernel[0]-1)/2)
@@ -14,8 +17,8 @@ def starsID(imgBW,nearNeighbors=4,backThresh=125,starThresh=125,kernel=(5,5)):
     imgBW[:,0:kHorz-1] = 0
     imgBW[:,-kHorz:-1] = 0
     
-    ret1,imgThresh = cv.threshold(imgBW,backThresh,255,cv.THRESH_TOZERO)
-    ret2,imgStars = cv.threshold(imgBW,starThresh,255,cv.THRESH_BINARY)
+    imgThresh = ipf.imgThreshold(imgBW,backThresh,255)
+    imgStars = ipf.imgThreshold(imgBW,starThresh,starThresh)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
     near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]

@@ -1,37 +1,45 @@
-import cv2 as cv
+#import cv2 as cv
+from PIL import Image as im
 import numpy as np
 #import matplotlib.pyplot as plt
 
 #Read Image
-def imgRead(fileName,numCh=3):
-    img = cv.imread(fileName)
-    if numCh == 3:
-        img = np.flip(img,2)
-    
+def imgRead(fileName,mode="RGB"):
+    img = np.asarray(im.open(fileName).convert(mode))
     imgSize = np.shape(img)
-    
+            
     return [img,imgSize]
 
 #Write Image
-def imgWrite(img,fileName,numCh=3):
-    if numCh == 3:
-        img = np.flip(img,2)
-        
-    cv.imwrite(fileName,img)
+def imgWrite(img,fileName,mode="RGB"):
+	tempImg = im.fromarray(img).convert(mode)
+	tempImg.save(fileName)
 
 ###############################################################################
 
 #Convert to B&W:
 def imgBandW(img):
-    imgBW = np.mean(img,axis=2)
-    
-    return imgBW
+	imgBW = np.mean(img,axis=2)
+	
+	return imgBW
 
-#Convert to Binary (Black/White)
-def imgThresh(imgBW,threshVal):
-    ret,imgBin = cv.threshold(imgBW,threshVal,255,cv.THRESH_BINARY)
-    
-    return imgBin
+#Threshold
+def imgThreshold(imgBW,lowVal=0,highVal=255):
+	imgThresh = imgBW
+	imgSize = np.shape(imgBW)
+	
+	for row in range(imgSize[0]):
+		for colm in range(imgSize[1]):
+			if imgBW[row,colm] >= highVal:
+				pixVal = 255
+			elif imgBW[row,colm] <= lowVal:
+				pixVal = 0
+			else:
+				pixVal = imgBW[row,colm]
+			
+			imgThresh[row,colm] = pixVal
+	
+	return imgThresh
 
 #Flatten
 def imgFlatten(img,dims):
