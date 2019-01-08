@@ -12,15 +12,10 @@ fileName = 'stars.jpg'
 [img,imgSize] = ipf.imgRead(fileName)
 
 imgBW = ipf.imgBandW(img)
-#imgBW = ipf.imgCrop(imgBW,[420,500],[450,560])
+#imgBW = ipf.imgCrop(imgBW,[315,365],[350,400])
+imgBW = ipf.imgCrop(imgBW,[400,500],[450,550])
 
-[imgStars,imgThresh,starList,starShapes,numStars] = apf.starsID(imgBW,nearNeighbors=4,backThresh=125,starThresh=255,kernel=(5,5))
-#ipf.imgWrite(imgStars,'stars_stars.bmp',"L")
+[imgThresh,numStars] = apf.starID(imgBW,neighbor=4,backThresh=100,kernel=(5,5))
 ipf.imgWrite(imgThresh,'stars_thresh.bmp',"L")
 
-#plt.close()
-#plt.imshow(imgThresh)
-#y,x = zip(*starList)
-#plt.scatter(x, y)
-
-#print(numStars)
+print(numStars)

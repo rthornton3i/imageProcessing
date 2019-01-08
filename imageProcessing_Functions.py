@@ -6,39 +6,39 @@ import numpy as np
 def imgRead(fileName,mode="RGB"):
     img = np.asarray(im.open(fileName).convert(mode))
     imgSize = np.shape(img)
-            
+                
     return [img,imgSize]
 
 #Write Image
 def imgWrite(img,fileName,mode="RGB"):
-	tempImg = im.fromarray(img).convert(mode)
-	tempImg.save(fileName)
+    tempImg = im.fromarray(img).convert(mode)
+    tempImg.save(fileName,quality=100)
 
 ###############################################################################
 
 #Convert to B&W:
 def imgBandW(img):
-	imgBW = np.mean(img,axis=2)
-	
-	return imgBW
+    imgBW = np.mean(img,axis=2)
+    
+    return imgBW
 
 #Threshold
-def imgThreshold(imgBW,lowVal=0,highVal=255):
-	tempImg = imgBW
-	imgSize = np.shape(tempImg)
-	
-	for row in range(imgSize[0]):
-		for colm in range(imgSize[1]):
-			if tempImg[row,colm] >= highVal:
-				pixVal = 255
-			elif tempImg[row,colm] <= lowVal:
-				pixVal = 0
-			else:
-				pixVal = tempImg[row,colm]
-			
-			tempImg[row,colm] = pixVal
-	
-	return tempImg
+def imgThreshold(img,lowVal=0,highVal=255):
+    tempImg = img
+    imgSize = np.shape(img)
+    
+    for row in range(imgSize[0]):
+        for colm in range(imgSize[1]):
+            if img[row,colm] >= highVal:
+                pixVal = 255
+            elif img[row,colm] <= lowVal:
+                pixVal = 0
+            else:
+                pixVal = img[row,colm]
+                
+            tempImg[row,colm] = pixVal
+    	
+    return tempImg
 
 #Flatten
 def imgFlatten(img,dims):
