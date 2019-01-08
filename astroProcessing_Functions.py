@@ -1,12 +1,22 @@
 #from PIL import Image as im
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 import imageProcessing_Functions as ipf
 
 #Number and Identify Stars
-def starID(imgBW,neighbor=4,backThresh=125,kernel=(5,5)):
+def starID(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
     imgSize = np.shape(imgBW)
+    
+    near4 = [[0,1],[-1,0],[0,-1],[1,0]]
+    near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
+    
+    if neighbor == 4:
+        near = near4
+    elif neighbor == 8:
+        near = near8
+    else:
+        near = near8
     
     kVert = int((kernel[0]-1)/2)
     kHorz = int((kernel[1]-1)/2)
@@ -18,7 +28,7 @@ def starID(imgBW,neighbor=4,backThresh=125,kernel=(5,5)):
     
     imgThresh = ipf.imgThreshold(imgBW,lowVal=backThresh)
     
-    starList = starPixels(imgThresh,imgSize,neighbor)
+    starList = starPixels(imgThresh,imgSize,near)
     numStars = len(starList)
     
     starCenters = []
@@ -27,27 +37,12 @@ def starID(imgBW,neighbor=4,backThresh=125,kernel=(5,5)):
         
     starShapes = []
     for star in starCenters:
-        starShape = [imgThresh[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
+        starShape = starGeometry(star,imgThresh,kernel,near,exclude)
         starShapes.append(starShape)
-    
-    plt.close()
-    plt.imshow(imgThresh,interpolation="none")
-    y,x = zip(*starCenters)
-    plt.scatter(x,y)
 
-    return [imgThresh,numStars]
+    return [imgThresh,starShapes,numStars]
 
-def starPixels(imgThresh,imgSize,neighbor):
-    near4 = [[0,1],[-1,0],[0,-1],[1,0]]
-    near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
-    
-    if neighbor == 4:
-        near = near4
-    elif neighbor == 8:
-        near = near8
-    else:
-        near = near8
-    
+def starPixels(imgThresh,imgSize,near):    
     starList = []
     pixels = []
     for row in range(1,imgSize[0]-1):
@@ -83,3 +78,41 @@ def starCoM(star):
     starCenter = (rowCenter,colmCenter)
     
     return starCenter
+    
+def starGeometry(star,imgThresh,kernel,near,exclude):
+    kVert = int((kernel[0]-1)/2)
+    kHorz = int((kernel[1]-1)/2)
+    
+    starShape = [imgThresh[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
+    starShape = np.reshape(starShape,kernel)
+    
+    if exclude == True:
+        tempArray = np.zeros((kernel[0]+2,kernel[1]+2))
+        tempArray[1:-1,1:-1] = starShape
+        starSize = np.shape(tempArray)
+    
+        row = kVert + 1
+        colm = kHorz + 1
+        starCenter = (row,colm,tempArray[row,colm])
+        
+        nearVals = [(row+index[0],colm+index[1],tempArray[row+index[0],colm+index[1]]) for index in near]
+        tempStars = [nearVal for nearVal in nearVals if nearVal[2] > 0]
+        
+        for tempStar in tempStars:
+            nearVals = [(tempStar[0]+index[0],tempStar[1]+index[1],tempArray[tempStar[0]+index[0],tempStar[1]+index[1]]) for index in near]
+            
+            for nearVal in nearVals:
+                if nearVal[2] > 0 and nearVal not in tempStars and nearVal != starCenter:
+                    tempStars.append(nearVal)
+        
+        tempStars.append(starCenter)
+        
+        for row in range(starSize[0]):
+            for colm in range(starSize[1]):
+                curStar = (row,colm,tempArray[row,colm])
+                if curStar not in tempStars:
+                    tempArray[row,colm] = 0
+        
+        starShape = tempArray
+                
+    return starShape
