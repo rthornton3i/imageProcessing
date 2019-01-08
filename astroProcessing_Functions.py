@@ -116,3 +116,6 @@ def starGeometry(star,imgThresh,kernel,near,exclude):
         starShape = tempArray
                 
     return starShape
+    
+def(mainStars,secStars):
+    pass
