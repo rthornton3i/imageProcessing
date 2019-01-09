@@ -14,13 +14,15 @@ imgBW = ipf.imgBandW(img)
 imgBW1 = ipf.imgCrop(imgBW,[380,480],[450,550])
 imgBW2 = ipf.imgCrop(imgBW,[400,500],[450,550])
 
-[imgThresh1,starIDs1,numStars1] = apf.starID(imgBW1,neighbor=8,backThresh=125,kernel=(11,11),exclude=False)
-[imgThresh2,starIDs2,numStars2] = apf.starID(imgBW2,neighbor=8,backThresh=125,kernel=(11,11),exclude=False)
+[imgThresh1,starIDs1,numStars1] = apf.starID_ShpInt(imgBW1,neighbor=8,backThresh=125,kernel=(11,11),exclude=False)
+[imgThresh2,starIDs2,numStars2] = apf.starID_ShpInt(imgBW2,neighbor=8,backThresh=125,kernel=(11,11),exclude=False)
 
-apf.starAlign(starIDs1,starIDs2)
+[imgStars,starAdjs,numStars] = apf.starID_Neighbors(imgBW,neighbor=8,starThresh=250)
 
 ipf.imgWrite(imgThresh1,'stars_thresh1.bmp',"L")
 ipf.imgWrite(imgThresh2,'stars_thresh2.bmp',"L")
+
+ipf.imgWrite(imgStars,'stars_stars.bmp',"L")
 
 plt.close()
 plt.subplot(121),plt.imshow(imgThresh1,interpolation="none")

@@ -4,8 +4,44 @@ import numpy as np
 
 import imageProcessing_Functions as ipf
 
-#Number and Identify Stars
-def starID(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
+def starID_Neighbors(imgBW,neighbor=8,starThresh=250):
+    imgSize = np.shape(imgBW)
+    
+    near4 = [[0,1],[-1,0],[0,-1],[1,0]]
+    near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
+    
+    if neighbor == 4:
+        near = near4
+    elif neighbor == 8:
+        near = near8
+    else:
+        near = near8
+    
+    imgBW[0,:] = 0
+    imgBW[-1,:] = 0
+    imgBW[:,0] = 0
+    imgBW[:,-1] = 0
+    
+    imgStars = ipf.imgThreshold(imgBW,lowVal=starThresh,highVal=starThresh)
+    
+    starList = starPixels(imgStars,imgSize,near)
+    numStars = len(starList)
+    
+    starCenters = []
+    for star in starList:
+        starCenters.append(starCoM(star))
+        
+    starAdjs = []
+    for star in starCenters:
+        nearStars = starNeighbors(star,imgStars)
+        starAdjs.append(nearStars)
+    
+#    starIDs = list(zip(starShapes,starInts,starCenters))
+#    starIDs = sorted(starIDs,key=lambda x:x[1])
+    
+    return [imgStars,starAdjs,numStars]
+    
+def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
     imgSize = np.shape(imgBW)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
@@ -48,22 +84,22 @@ def starID(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
 
     return [imgThresh,starIDs,numStars]
 
-def starPixels(imgThresh,imgSize,near):    
+def starPixels(img,imgSize,near):    
     starList = []
     pixels = []
     for row in range(1,imgSize[0]-1):
         for colm in range(1,imgSize[1]-1):
-            curVal = imgThresh[row,colm]
+            curVal = img[row,colm]
             if curVal > 0 and (row,colm) not in pixels:
                 star = (row,colm)
                 pixels.append(star)
                 
-                nearVals = [(row+index[0],colm+index[1],imgThresh[row+index[0],colm+index[1]]) for index in near]
+                nearVals = [(row+index[0],colm+index[1],img[row+index[0],colm+index[1]]) for index in near]
                 tempStars = [(nearVal[0],nearVal[1]) for nearVal in nearVals if nearVal[2] > 0]
                 
                 for tempStar in tempStars:
                     pixels.append(tempStar)
-                    nearVals = [(tempStar[0]+index[0],tempStar[1]+index[1],imgThresh[tempStar[0]+index[0],tempStar[1]+index[1]]) for index in near]
+                    nearVals = [(tempStar[0]+index[0],tempStar[1]+index[1],img[tempStar[0]+index[0],tempStar[1]+index[1]]) for index in near]
                     
                     for nearVal in nearVals:
                         if nearVal[2] > 0 and (nearVal[0],nearVal[1]) not in tempStars and (nearVal[0],nearVal[1]) not in pixels:
@@ -85,11 +121,11 @@ def starCoM(star):
     
     return starCenter
     
-def starGeometry(star,imgThresh,kernel,near,exclude):
+def starGeometry(star,img,kernel,near,exclude):
     kVert = int((kernel[0]-1)/2)
     kHorz = int((kernel[1]-1)/2)
     
-    starShape = [imgThresh[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
+    starShape = [img[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
     starShape = np.reshape(starShape,kernel)
     starInt = sum(sum(starShape)) 
     
@@ -124,7 +160,11 @@ def starGeometry(star,imgThresh,kernel,near,exclude):
         starInt = sum(sum(starShape)) 
                 
     return [starShape,starInt]
+
+def starNeighbors(star,img):
+    nearStars = []    
+    
+    return nearStars    
     
 def starAlign(mainStars,secStars):
-    
     pass
