@@ -36,11 +36,17 @@ def starID(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
         starCenters.append(starCoM(star))
         
     starShapes = []
+    starInts = []
     for star in starCenters:
-        starShape = starGeometry(star,imgThresh,kernel,near,exclude)
+        [starShape,starInt] = starGeometry(star,imgThresh,kernel,near,exclude)
+        
         starShapes.append(starShape)
+        starInts.append(starInt)
+    
+    starIDs = list(zip(starShapes,starInts,starCenters))
+    starIDs = sorted(starIDs,key=lambda x:x[1])
 
-    return [imgThresh,starShapes,numStars]
+    return [imgThresh,starIDs,numStars]
 
 def starPixels(imgThresh,imgSize,near):    
     starList = []
@@ -85,6 +91,7 @@ def starGeometry(star,imgThresh,kernel,near,exclude):
     
     starShape = [imgThresh[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
     starShape = np.reshape(starShape,kernel)
+    starInt = sum(sum(starShape)) 
     
     if exclude == True:
         tempArray = np.zeros((kernel[0]+2,kernel[1]+2))
@@ -114,8 +121,10 @@ def starGeometry(star,imgThresh,kernel,near,exclude):
                     tempArray[row,colm] = 0
         
         starShape = tempArray
+        starInt = sum(sum(starShape)) 
                 
-    return starShape
+    return [starShape,starInt]
     
-def(mainStars,secStars):
+def starAlign(mainStars,secStars):
+    
     pass

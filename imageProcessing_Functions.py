@@ -64,8 +64,6 @@ def imgUnflat(flatImg,imgSize):
 
 #Crop
 def imgCrop(img,rows,colms):
-    ht, wt = img.shape
-    
     rows.sort
     colms.sort
     
@@ -73,6 +71,32 @@ def imgCrop(img,rows,colms):
     
     return cropImg
 
+#Transform (Translate/Rotate)
+def imgTransform(img,pts1,pts2):
+    imgSize = np.shape(img)
+    origin = [int((imgSize[0]-1)/2),int((imgSize[1]-1)/2)]
+    
+    pt1a = pts1[0]
+    pt1b = pts1[1]
+    pt2a = pts2[0]
+    pt2b = pts2[1]
+    
+    vecPt1a = [origin[0]-pt1a[0],pt1a[1]-origin[1]]
+    vecPt1b = [origin[0]-pt1b[0],pt1b[1]-origin[1]]
+    
+    vecPt2a = [origin[0]-pt2a[0],pt2a[1]-origin[1]]
+    vecPt2b = [origin[0]-pt2b[0],pt2b[1]-origin[1]]
+    
+    return transImg    
+#Rotate
+def imgRotate(img):
+    ht, wt = img.shape
+    
+    rotMatrix = cv.getRotationMatrix2D((wt/2,ht/2),90,1)
+    rot = cv.warpAffine(img,rotMatrix,(wt,ht))
+    
+    return rot
+    
 #Scale
 def imgScale(img):
     ht, wt, ch = img.shape
@@ -89,15 +113,6 @@ def imgTranslate(img):
     trans = cv.warpAffine(img,transMatrix,(wt,ht))
     
     return trans
-
-#Rotate
-def imgRotate(img):
-    ht, wt, ch = img.shape
-    
-    rotMatrix = cv.getRotationMatrix2D((wt/2,ht/2),90,1)
-    rot = cv.warpAffine(img,rotMatrix,(wt,ht))
-    
-    return rot
 
 #Affine
 def imgAffine(img,startPts,endPts):
