@@ -40,6 +40,8 @@ def imgThreshold(img,lowVal=0,highVal=255):
     	
     return tempImg
 
+###############################################################################
+
 #Flatten
 def imgFlatten(img,dims):
     dim = 1
@@ -59,6 +61,35 @@ def imgUnflat(flatImg,imgSize):
         img = np.reshape(flatImg,[imgSize[0],imgSize[1],imgSize[2]])
         
     return img
+    
+def spiralStep(loopCount):
+    dR_Array = []
+    dC_Array = []
+    
+    stepSizeA = (loopCount*2)+1
+    stepSizeB = (loopCount*2)-1
+    
+    for n in range(loopCount-1,-loopCount,-1):       
+        dR_Array.append(n)
+    for n in range(stepSizeA):
+        dR_Array.append(-loopCount)
+    for n in range(-loopCount+1,loopCount):       
+        dR_Array.append(n)
+    for n in range(stepSizeA):
+        dR_Array.append(loopCount)
+        
+    for m in range(stepSizeB):
+        dC_Array.append(loopCount)
+    for m in range(loopCount,-loopCount-1,-1):       
+        dC_Array.append(m)
+    for m in range(stepSizeB):
+        dC_Array.append(-loopCount)
+    for m in range(-loopCount,loopCount+1):       
+        dC_Array.append(m)
+    
+    rcArray = list(zip(dR_Array,dC_Array))
+    
+    return rcArray
 
 ###############################################################################
 

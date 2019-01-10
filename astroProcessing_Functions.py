@@ -1,10 +1,10 @@
 #from PIL import Image as im
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import imageProcessing_Functions as ipf
 
-def starID_Neighbors(imgBW,neighbor=8,starThresh=250):
+def starID_Neighbors(imgBW,neighbor=8,starThresh=250,kernel=(11,11),exclude=True):
     imgSize = np.shape(imgBW)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
@@ -17,10 +17,13 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250):
     else:
         near = near8
     
-    imgBW[0,:] = 0
-    imgBW[-1,:] = 0
-    imgBW[:,0] = 0
-    imgBW[:,-1] = 0
+    kVert = int((kernel[0]-1)/2)
+    kHorz = int((kernel[1]-1)/2)
+    
+    imgBW[0:kVert,:] = 0
+    imgBW[-kVert:,:] = 0
+    imgBW[:,0:kHorz] = 0
+    imgBW[:,-kHorz:] = 0
     
     imgStars = ipf.imgThreshold(imgBW,lowVal=starThresh,highVal=starThresh)
     
@@ -31,17 +34,22 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250):
     for star in starList:
         starCenters.append(starCoM(star))
         
-    starAdjs = []
+    starInts = []
     for star in starCenters:
-        nearStars = starNeighbors(star,imgStars)
-        starAdjs.append(nearStars)
+        [starShape,starInt] = starGeometry(star,imgStars,kernel,near,exclude)
+        starInts.append(starInt)
     
-#    starIDs = list(zip(starShapes,starInts,starCenters))
-#    starIDs = sorted(starIDs,key=lambda x:x[1])
+    starIDs = list(zip(starInts,starCenters))
+    starIDs = sorted(starIDs,key=lambda x:x[0])
+    
+    starAdjs = []
+    for star in starIDs[-3:]:
+        nearStars = starNeighbors(star[1],starCenters)
+        starAdjs.append(nearStars)
     
     return [imgStars,starAdjs,numStars]
     
-def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
+def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(11,11),exclude=False):
     imgSize = np.shape(imgBW)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
@@ -81,7 +89,7 @@ def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(9,9),exclude=False):
     
     starIDs = list(zip(starShapes,starInts,starCenters))
     starIDs = sorted(starIDs,key=lambda x:x[1])
-
+    
     return [imgThresh,starIDs,numStars]
 
 def starPixels(img,imgSize,near):    
@@ -161,23 +169,29 @@ def starGeometry(star,img,kernel,near,exclude):
                 
     return [starShape,starInt]
 
-def starNeighbors(star,img):
+def starNeighbors(star,starCenters):
     nearStars = []
     
     row = star[0]
     colm = star[1]
-    dRow = 0
-    dColm = -1
     
-    for i in range(max(X, Y)**2):
-        if (-X/2 < x <= X/2) and (-Y/2 < y <= Y/2):
-            print (x, y)
-            # DO STUFF...
-        if x == y or (x < 0 and x == -y) or (x > 0 and x == 1-y):
-            dx, dy = -dy, dx
-        x, y = x+dx, y+dy
+    loopCount = 1    
+    starCount = 0
+    while True:
+        rcArray = ipf.spiralStep(loopCount)
+        
+        for rc in rcArray:
+            tempRow = row + rc[0]
+            tempColm = colm + rc[1]
+            
+            if (tempRow,tempColm) in starCenters:
+                starCount += 1
+                nearStars.append((rc[0],rc[1]))
+            
+            if starCount == 10:
+                return nearStars
+        
+        loopCount += 1
     
-    return nearStars    
-    
-def starAlign(mainStars,secStars):
+def starAlign_Neighbors(mainStars,secStars,starCenters):
     pass
