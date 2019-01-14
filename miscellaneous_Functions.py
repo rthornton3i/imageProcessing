@@ -1,5 +1,5 @@
-import numpy as np
 import math
+import numpy as np
 #import matplotlib.pyplot as plt
 
 def spiralStep(loopCount):
@@ -31,10 +31,26 @@ def spiralStep(loopCount):
     
     return rcArray
 
-def vec2vec(vector,angle):
-    pass
+def vec2vec(vector1,angRad):
+    vector1 = [[vector1[0]],[vector1[1]]][::-1]
+    rotDir = angRad / abs(angRad)
+    
+    rotMat = [[math.cos(angRad),-math.sin(angRad)*rotDir],
+              [math.sin(angRad)*rotDir,math.cos(angRad)]]
+    
+    vector2 = np.matmul(rotMat,vector1)[::-1]
+    
+    return vector2
 
 def vec2ang(vector1,vector2):
-    np.dot()
+    vector1 = vector1[::-1]
+    vector2 = vector2[::-1]
+    
+    vecMag1 = math.sqrt(vector1[0]**2 + vector1[1]**2)
+    vecMag2 = math.sqrt(vector2[0]**2 + vector2[1]**2)
+    
+    rotDir = np.cross(vector1,vector2) / abs(np.cross(vector1,vector2))
+    
+    angRad = np.arccos(np.dot(vector1,vector2) / np.dot(vecMag1,vecMag2)) * rotDir
     
     return angRad

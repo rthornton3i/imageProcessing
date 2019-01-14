@@ -1,17 +1,21 @@
 from PIL import Image as im
-import numpy as np
 import math
+import numpy as np
 #import matplotlib.pyplot as plt
+
+import miscellaneous_Functions as mf
 
 #Read Image
 def imgRead(fileName,mode="RGB"):
     img = np.asarray(im.open(fileName).convert(mode))
     imgSize = np.shape(img)
+    origin = [int((imgSize[0]-1)/2),int((imgSize[1]-1)/2)]
                 
-    return [img,imgSize]
+    return [img,imgSize,origin]
 
 #Write Image
 def imgWrite(img,fileName,mode="RGB"):
+    img = np.uint8(img)
     tempImg = im.fromarray(img).convert(mode)
     tempImg.save(fileName,quality=100)
 
@@ -25,8 +29,8 @@ def imgBandW(img):
 
 #Threshold
 def imgThreshold(img,lowVal=0,highVal=255):
-    tempImg = img
     imgSize = np.shape(img)
+    imgThresh = np.zeros([imgSize[0],imgSize[1]])
     
     for row in range(imgSize[0]):
         for colm in range(imgSize[1]):
@@ -37,9 +41,47 @@ def imgThreshold(img,lowVal=0,highVal=255):
             else:
                 pixVal = img[row,colm]
                 
-            tempImg[row,colm] = pixVal
+            imgThresh[row,colm] = pixVal
     	
-    return tempImg
+    return imgThresh
+    
+def imgInterpolate(img,neighbor=8):
+    imgSize = np.shape(img)
+    interpImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
+    
+    near4 = [[0,1],[-1,0],[0,-1],[1,0]]
+    near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
+    
+    if neighbor == 4:
+        near = near4
+    elif neighbor == 8:
+        near = near8
+    else:
+        near = near8
+        
+    for row in range(imgSize[0]):
+        for colm in range(imgSize[1]):
+            pixVal = img[row,colm]
+            nearVals = [(index[0],index[1],img[row+index[0],colm+index[1]]) for index in near]
+            
+            if pixVal == 0 and np.any(nearVals > 0):
+                avgVal = []
+                for nearVal in nearVals:
+                    tempRow = nearVal[0]
+                    tempColm = nearVal[1]
+                    
+                    val1 = nearVal[2]
+                    val2 = [compVal[2] for compVal in nearVals if (compVal[0],compVal[1]) == (-tempRow,-tempColm)]
+                
+                    interpVal = np.mean((val1,val2))
+                    
+                    avgVal.append(interpVal)
+
+                pixVal = np.mean(avgVal)                
+                
+            interpImg[row,colm] = pixVal
+            
+    return interpImg
 
 ###############################################################################
 
@@ -95,20 +137,28 @@ def imgTransform(img,pts1,pts2):
 #Rotate
 def imgRotate(img,rotAng,origin):
     imgSize = np.shape(img)
+    rotImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
     
     for row in range(imgSize[0]):
         for colm in range(imgSize[1]):
-            row2or = row-origin[0]
+            pixVal = img[row,colm]            
+            
+            row2or = origin[0]-row
             colm2or = colm-origin[1]
-            dist2or = math.sqrt(row2or**2 + colm2or**2)
+            
+            rotLoc = mf.vec2vec([row2or,colm2or],rotAng)
+            
+            rotRow = int(origin[0]-rotLoc[0])
+            rotColm = int(origin[1]+rotLoc[1])
+            
+            if rotRow >= 0 and rotRow < imgSize[0] and rotColm >= 0 and rotColm < imgSize[1]:
+                rotImg[rotRow,rotColm] = pixVal
     
     return rotImg
 
 #Translate
-def imgTranslate(img,transVector): 
-    imgSize = np.shape(img)
-    origin = [int((imgSize[0]-1)/2),int((imgSize[1]-1)/2)]
-    
+def imgTranslate(img,transVector,origin): 
+    imgSize = np.shape(img)    
     transImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
     transOrigin = [origin[0]+transVector[0],origin[1]+transVector[1]]
     
@@ -119,52 +169,8 @@ def imgTranslate(img,transVector):
             
             if transRow >= 0 and transRow < imgSize[0] and transColm >= 0 and transColm < imgSize[1]:
                 transImg[transRow,transColm] = img[row,colm]
-    
+
     return [transImg,transOrigin]
-
-#Scale
-def imgScale(img):
-    ht, wt, ch = img.shape
-    
-    scale = cv.resize(img,(2*wt,2*ht),interpolation=cv.INTER_CUBIC)
-    
-    return scale
-
-#Affine
-def imgAffine(img,startPts,endPts):
-    ht, wt, ch = img.shape
-    
-    pts1 = np.float32(startPts)
-    pts2 = np.float32(endPts)
-    
-    affMatrix = cv.getAffineTransform(pts1,pts2)
-    aff = cv.warpAffine(img,affMatrix,(wt,ht))
-    
-    return aff
-
-#Perspective
-def imgPerspective(img,pts):
-    ht, wt, ch = img.shape
-    
-    pts.sort(key=lambda x: x[0])
-
-    ptsTop = pts[0:2]
-    ptsTop.sort(key=lambda x: x[1])
-    ptsBot = pts[2:4]
-    ptsBot.sort(key=lambda x: x[1])
-    
-    pts = []
-    pts.extend(ptsTop)
-    pts.extend(ptsBot)
-    print(pts)
-    
-    pts1 = np.float32(pts)
-    pts2 = np.float32([[0,0],[0,wt],[ht,0],[ht,wt]])
-    
-    persMatrix = cv.getPerspectiveTransform(pts1,pts2)
-    pers = cv.warpPerspective(img,persMatrix,(wt,ht))
-    
-    return pers
 
 ###############################################################################
 
