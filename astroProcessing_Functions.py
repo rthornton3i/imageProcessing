@@ -1,10 +1,12 @@
 #from PIL import Image as im
 import numpy as np
-import matplotlib.pyplot as plt
+import math
+#import matplotlib.pyplot as plt
 
 import imageProcessing_Functions as ipf
+import miscellaneous_Functions as mf
 
-def starID_Neighbors(imgBW,neighbor=8,starThresh=250,kernel=(11,11),exclude=True):
+def starID_Neighbors(imgBW,neighbor=8,starThresh=250,compStars=5,kernel=(11,11),exclude=True):
     imgSize = np.shape(imgBW)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
@@ -42,12 +44,18 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250,kernel=(11,11),exclude=True
     starIDs = list(zip(starInts,starCenters))
     starIDs = sorted(starIDs,key=lambda x:x[0])
     
-    starAdjs = []
-    for star in starIDs[-3:]:
-        nearStars = starNeighbors(star[1],starCenters)
-        starAdjs.append(nearStars)
+    starCenters = []
+    starCenters = [star[1] for star in starIDs]
     
-    return [imgStars,starAdjs,numStars]
+    starAdjs = []
+    for star in starCenters[-compStars:]:
+        nearStars = starNeighbors(star,starCenters)
+        starAdjs.append(nearStars)
+        
+    starAdjs = np.flip(starAdjs,axis=0)
+    starCenters = np.asarray(starCenters)
+    
+    return [imgStars,starAdjs,starCenters,numStars]
     
 def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(11,11),exclude=False):
     imgSize = np.shape(imgBW)
@@ -178,7 +186,7 @@ def starNeighbors(star,starCenters):
     loopCount = 1    
     starCount = 0
     while True:
-        rcArray = ipf.spiralStep(loopCount)
+        rcArray = mf.spiralStep(loopCount)
         
         for rc in rcArray:
             tempRow = row + rc[0]
@@ -193,5 +201,34 @@ def starNeighbors(star,starCenters):
         
         loopCount += 1
     
-def starAlign_Neighbors(mainStars,secStars,starCenters):
-    pass
+def starMatch(mainAdjs,secAdjs):
+    avgDists = []
+    
+    secIndex = 0
+    for secStar in secAdjs:
+        mainIndex = 0
+        for mainStar in mainAdjs:
+            minDists = [starNearest(secAdjStar,mainStar) for secAdjStar in secStar]
+            
+            medDist = np.median(minDists)
+            stdDist = np.std(minDists)
+            
+            avgDist = np.mean([dist for dist in minDists if abs(medDist - dist) < (stdDist * 2)])
+            avgDist = 0.0 if np.isnan(avgDist) else avgDist
+            
+            avgDists.append((mainIndex,secIndex,avgDist))
+            
+            mainIndex += 1
+        secIndex += 1
+    
+    return avgDists
+
+def starNearest(testStar,nearStars):
+    dists = []
+    for nearStar in nearStars:
+        dist = math.sqrt((nearStar[0]-testStar[0])**2 + (nearStar[1]-testStar[1])**2)
+        dists.append(dist)
+        
+    index,value = min([(index,value) for index,value in enumerate(dists)],key=lambda x:x[1]) 
+    
+    return value    

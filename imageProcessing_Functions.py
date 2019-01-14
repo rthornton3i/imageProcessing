@@ -1,5 +1,6 @@
 from PIL import Image as im
 import numpy as np
+import math
 #import matplotlib.pyplot as plt
 
 #Read Image
@@ -61,35 +62,6 @@ def imgUnflat(flatImg,imgSize):
         img = np.reshape(flatImg,[imgSize[0],imgSize[1],imgSize[2]])
         
     return img
-    
-def spiralStep(loopCount):
-    dR_Array = []
-    dC_Array = []
-    
-    stepSizeA = (loopCount*2)+1
-    stepSizeB = (loopCount*2)-1
-    
-    for n in range(loopCount-1,-loopCount,-1):       
-        dR_Array.append(n)
-    for n in range(stepSizeA):
-        dR_Array.append(-loopCount)
-    for n in range(-loopCount+1,loopCount):       
-        dR_Array.append(n)
-    for n in range(stepSizeA):
-        dR_Array.append(loopCount)
-        
-    for m in range(stepSizeB):
-        dC_Array.append(loopCount)
-    for m in range(loopCount,-loopCount-1,-1):       
-        dC_Array.append(m)
-    for m in range(stepSizeB):
-        dC_Array.append(-loopCount)
-    for m in range(-loopCount,loopCount+1):       
-        dC_Array.append(m)
-    
-    rcArray = list(zip(dR_Array,dC_Array))
-    
-    return rcArray
 
 ###############################################################################
 
@@ -118,16 +90,38 @@ def imgTransform(img,pts1,pts2):
     vecPt2a = [origin[0]-pt2a[0],pt2a[1]-origin[1]]
     vecPt2b = [origin[0]-pt2b[0],pt2b[1]-origin[1]]
     
-    return transImg    
+    return transfImg   
+ 
 #Rotate
-def imgRotate(img):
-    ht, wt = img.shape
+def imgRotate(img,rotAng,origin):
+    imgSize = np.shape(img)
     
-    rotMatrix = cv.getRotationMatrix2D((wt/2,ht/2),90,1)
-    rot = cv.warpAffine(img,rotMatrix,(wt,ht))
+    for row in range(imgSize[0]):
+        for colm in range(imgSize[1]):
+            row2or = row-origin[0]
+            colm2or = colm-origin[1]
+            dist2or = math.sqrt(row2or**2 + colm2or**2)
     
-    return rot
+    return rotImg
+
+#Translate
+def imgTranslate(img,transVector): 
+    imgSize = np.shape(img)
+    origin = [int((imgSize[0]-1)/2),int((imgSize[1]-1)/2)]
     
+    transImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
+    transOrigin = [origin[0]+transVector[0],origin[1]+transVector[1]]
+    
+    for row in range(imgSize[0]):
+        for colm in range(imgSize[1]):
+            transRow = row+transVector[0]
+            transColm = colm+transVector[1]
+            
+            if transRow >= 0 and transRow < imgSize[0] and transColm >= 0 and transColm < imgSize[1]:
+                transImg[transRow,transColm] = img[row,colm]
+    
+    return [transImg,transOrigin]
+
 #Scale
 def imgScale(img):
     ht, wt, ch = img.shape
@@ -135,15 +129,6 @@ def imgScale(img):
     scale = cv.resize(img,(2*wt,2*ht),interpolation=cv.INTER_CUBIC)
     
     return scale
-
-#Translate
-def imgTranslate(img):
-    ht, wt, ch = img.shape
-    
-    transMatrix = np.float32([[1,0,100],[0,1,50]])
-    trans = cv.warpAffine(img,transMatrix,(wt,ht))
-    
-    return trans
 
 #Affine
 def imgAffine(img,startPts,endPts):
