@@ -25,8 +25,8 @@ imgBW_sec = ipf.imgBandW(img2)
 imgBW_sec = ipf.imgThreshold(imgBW_sec,lowVal=75)
 
 [imgStars_sec,starAdjs_sec,starCenters_sec,numStars_sec] = apf.starID(imgBW_sec,neighbor=8,starThresh=250,compStars=3,refStars=15,kernel=(11,11),exclude=True)
-transVector = apf.starCompare(starAdjs,starAdjs_sec,starCenters,starCenters_sec,refStars=3)
-imgTrans = ipf.imgTranslate(img2,transVector,origin=None)
+transVector = apf.starCompare(starAdjs,starAdjs_sec,starCenters,starCenters_sec,distThresh=2)
+imgTrans = ipf.imgTranslate(imgBW_sec,transVector,origin=None)
 
 
 

@@ -195,15 +195,16 @@ def starNearest(refStar,nearStars):
     
     return value
     
-def starCompare(mainAdjs,secAdjs,mainCenters,secCenters,refStars=3):
+def starCompare(mainAdjs,secAdjs,mainCenters,secCenters,distThresh=2):
     comps = sorted(starDists(mainAdjs,secAdjs),key=lambda x:x[2])
     
     starPos = []
-    for comp in comps[:refStars]:        
-        mainStar = mainCenters[int(comp[0])]
-        secStar = secCenters[int(comp[1])]
-        
-        starPos.append((mainStar,secStar))
+    for comp in comps:
+        if comp[2] <= distThresh:
+            mainStar = mainCenters[int(comp[0])]
+            secStar = secCenters[int(comp[1])]
+            
+            starPos.append((mainStar,secStar))
         
     starTrans = []
     for pos in starPos:
@@ -212,6 +213,6 @@ def starCompare(mainAdjs,secAdjs,mainCenters,secCenters,refStars=3):
         
         starTrans.append((rT,cT))
     
-    transVector = np.round(np.mean(starTrans,axis=0)).astype(int)
+    transVector = np.round(np.median(starTrans,axis=0)).astype(int)
     
     return transVector

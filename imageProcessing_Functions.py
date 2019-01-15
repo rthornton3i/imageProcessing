@@ -168,7 +168,7 @@ def imgTranslate(img,transVector,origin=None):
         origin = [int(round((imgSize[0]-1)/2)),int(round((imgSize[1]-1)/2))]
         
     transImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
-    transOrigin = [origin[0]+transVector[0],origin[1]+transVector[1]]
+#    transOrigin = [origin[0]+transVector[0],origin[1]+transVector[1]]
     
     for row in range(imgSize[0]):
         for colm in range(imgSize[1]):
