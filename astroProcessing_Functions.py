@@ -6,7 +6,7 @@ import numpy as np
 import imageProcessing_Functions as ipf
 import miscellaneous_Functions as mf
 
-def starID_Neighbors(imgBW,neighbor=8,starThresh=250,compStars=5,refStars=10,kernel=(11,11),exclude=True):
+def starID(imgBW,neighbor=8,starThresh=250,compStars=10,refStars=15,kernel=(11,11),exclude=True):
     imgSize = np.shape(imgBW)
     
     near4 = [[0,1],[-1,0],[0,-1],[1,0]]
@@ -19,8 +19,8 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250,compStars=5,refStars=10,ker
     else:
         near = near8
     
-    kVert = int((kernel[0]-1)/2)
-    kHorz = int((kernel[1]-1)/2)
+    kVert = round((kernel[0]-1)/2)
+    kHorz = round((kernel[1]-1)/2)
     
     imgBW[0:kVert,:] = 0
     imgBW[-kVert:,:] = 0
@@ -41,14 +41,10 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250,compStars=5,refStars=10,ker
         [starShape,starInt] = starGeometry(star,imgStars,kernel,near,exclude)
         starInts.append(starInt)
     
-    starIDs = list(zip(starInts,starCenters))
-    starIDs = sorted(starIDs,key=lambda x:x[0])
-    
-    starCenters = []
-    starCenters = [star[1] for star in starIDs][::-1]
+    starCenters = mf.secSort(starInts,starCenters,reverse=True)
     
     starAdjs = []
-    for star in starCenters[-compStars:]:
+    for star in starCenters[:compStars]:
         nearStars = starNeighbors(star,starCenters,refStars)
         starAdjs.append(nearStars)
         
@@ -56,49 +52,6 @@ def starID_Neighbors(imgBW,neighbor=8,starThresh=250,compStars=5,refStars=10,ker
     starAdjs = np.asarray(starAdjs)
     
     return [imgStars,starAdjs,starCenters,numStars]
-    
-def starID_ShpInt(imgBW,neighbor=8,backThresh=125,kernel=(11,11),exclude=False):
-    imgSize = np.shape(imgBW)
-    
-    near4 = [[0,1],[-1,0],[0,-1],[1,0]]
-    near8 = [[0,1],[-1,0],[0,-1],[1,0],[1,1],[-1,1],[1,-1],[-1,-1]]
-    
-    if neighbor == 4:
-        near = near4
-    elif neighbor == 8:
-        near = near8
-    else:
-        near = near8
-    
-    kVert = int((kernel[0]-1)/2)
-    kHorz = int((kernel[1]-1)/2)
-    
-    imgBW[0:kVert,:] = 0
-    imgBW[-kVert:,:] = 0
-    imgBW[:,0:kHorz] = 0
-    imgBW[:,-kHorz:] = 0
-    
-    imgThresh = ipf.imgThreshold(imgBW,lowVal=backThresh)
-    
-    starList = starPixels(imgThresh,imgSize,near)
-    numStars = len(starList)
-    
-    starCenters = []
-    for star in starList:
-        starCenters.append(starCoM(star))
-        
-    starShapes = []
-    starInts = []
-    for star in starCenters:
-        [starShape,starInt] = starGeometry(star,imgThresh,kernel,near,exclude)
-        
-        starShapes.append(starShape)
-        starInts.append(starInt)
-    
-    starIDs = list(zip(starShapes,starInts,starCenters))
-    starIDs = sorted(starIDs,key=lambda x:x[1])
-    
-    return [imgThresh,starIDs,numStars]
 
 def starPixels(img,imgSize,near):    
     starList = []
@@ -122,7 +75,9 @@ def starPixels(img,imgSize,near):
                             tempStars.append((nearVal[0],nearVal[1]))
                 
                 tempStars.append(star)
-                starList.append(tempStars)    
+                starList.append(tempStars)
+                
+    starList = np.asarray(starList)
     
     return starList
     
@@ -130,16 +85,16 @@ def starCoM(star):
     rows = [pixel[0] for pixel in star]
     colms = [pixel[1] for pixel in star]
     
-    rowCenter = int(np.round(np.mean(rows)))
-    colmCenter = int(np.round(np.mean(colms)))
+    rowCenter = int(round(np.mean(rows)))
+    colmCenter = int(round(np.mean(colms)))
     
     starCenter = (rowCenter,colmCenter)
     
     return starCenter
     
 def starGeometry(star,img,kernel,near,exclude):
-    kVert = int((kernel[0]-1)/2)
-    kHorz = int((kernel[1]-1)/2)
+    kVert = round((kernel[0]-1)/2)
+    kHorz = round((kernel[1]-1)/2)
     
     starShape = [img[star[0]+n,star[1]+m] for n in range(-kVert,kVert+1) for m in range(-kHorz,kHorz+1)]
     starShape = np.reshape(starShape,kernel)
@@ -173,7 +128,9 @@ def starGeometry(star,img,kernel,near,exclude):
                     tempArray[row,colm] = 0
         
         starShape = tempArray
-        starInt = sum(sum(starShape)) 
+        starInt = sum(sum(starShape))
+    
+    starShape = np.asarray(starShape)
                 
     return [starShape,starInt]
 
@@ -197,11 +154,13 @@ def starNeighbors(star,starCenters,refStars):
                 nearStars.append((rc[0],rc[1]))
             
             if starCount == refStars:
+                nearStars = np.asarray(nearStars)
+                
                 return nearStars
         
         loopCount += 1
     
-def starMatch(mainAdjs,secAdjs):
+def starDists(mainAdjs,secAdjs):
     avgDists = []
     
     secIndex = 0
@@ -219,7 +178,10 @@ def starMatch(mainAdjs,secAdjs):
             avgDists.append((mainIndex,secIndex,avgDist))
             
             mainIndex += 1
+            
         secIndex += 1
+    
+    avgDists = np.asarray(avgDists)
     
     return avgDists
 
@@ -231,4 +193,25 @@ def starNearest(refStar,nearStars):
         
     index,value = min([(index,value) for index,value in enumerate(dists)],key=lambda x:x[1]) 
     
-    return value    
+    return value
+    
+def starCompare(mainAdjs,secAdjs,mainCenters,secCenters,refStars=3):
+    comps = sorted(starDists(mainAdjs,secAdjs),key=lambda x:x[2])
+    
+    starPos = []
+    for comp in comps[:refStars]:        
+        mainStar = mainCenters[int(comp[0])]
+        secStar = secCenters[int(comp[1])]
+        
+        starPos.append((mainStar,secStar))
+        
+    starTrans = []
+    for pos in starPos:
+        rT = pos[0][0] - pos[1][0]
+        cT = pos[0][1] - pos[1][1]
+        
+        starTrans.append((rT,cT))
+    
+    transVector = np.round(np.mean(starTrans,axis=0)).astype(int)
+    
+    return transVector

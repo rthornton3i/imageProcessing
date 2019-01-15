@@ -54,3 +54,18 @@ def vec2ang(vector1,vector2):
     angRad = np.arccos(np.dot(vector1,vector2) / np.dot(vecMag1,vecMag2)) * rotDir
     
     return angRad
+
+def secSort(sortList,lst,index=None,reverse=False):
+    combList = list(zip(sortList,lst))
+    
+    if index == None:
+        combList = sorted(combList,key=lambda x:x[0])
+    else:
+        combList = sorted(combList,key=lambda x:x[0][index])
+    
+    sortedList = []
+    sortedList = [item[1] for item in combList]
+    
+    sortedList = sortedList if reverse == False else sortedList[::-1]
+    
+    return sortedList

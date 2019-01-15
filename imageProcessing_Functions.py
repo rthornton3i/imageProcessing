@@ -9,7 +9,7 @@ import miscellaneous_Functions as mf
 def imgRead(fileName,mode="RGB"):
     img = np.asarray(im.open(fileName).convert(mode))
     imgSize = np.shape(img)
-    origin = [int((imgSize[0]-1)/2),int((imgSize[1]-1)/2)]
+    origin = [int(round((imgSize[0]-1)/2)),int(round((imgSize[1]-1)/2))]
                 
     return [img,imgSize,origin]
 
@@ -30,7 +30,7 @@ def imgBandW(img):
 #Threshold
 def imgThreshold(img,lowVal=0,highVal=255):
     imgSize = np.shape(img)
-    imgThresh = np.zeros([imgSize[0],imgSize[1]])
+    imgThresh = np.zeros([imgSize[0],imgSize[1]]).astype(int)
     
     for row in range(imgSize[0]):
         for colm in range(imgSize[1]):
@@ -59,25 +59,25 @@ def imgInterpolate(img,neighbor=8):
     else:
         near = near8
         
-    for row in range(imgSize[0]):
-        for colm in range(imgSize[1]):
+    for row in range(1,imgSize[0]-1):
+        for colm in range(1,imgSize[1]-1):
             pixVal = img[row,colm]
             nearVals = [(index[0],index[1],img[row+index[0],colm+index[1]]) for index in near]
             
-            if pixVal == 0 and np.any(nearVals > 0):
+            if np.mean(pixVal) == 0 and any(np.mean(nearVal[2]) > 0 for nearVal in nearVals):
                 avgVal = []
                 for nearVal in nearVals:
                     tempRow = nearVal[0]
                     tempColm = nearVal[1]
                     
                     val1 = nearVal[2]
-                    val2 = [compVal[2] for compVal in nearVals if (compVal[0],compVal[1]) == (-tempRow,-tempColm)]
+                    val2 = [compVal[2] for compVal in nearVals if (compVal[0],compVal[1]) == (-tempRow,-tempColm)][0]
                 
-                    interpVal = np.mean((val1,val2))
+                    interpVal = np.mean((val1,val2),axis=0)
                     
                     avgVal.append(interpVal)
 
-                pixVal = np.mean(avgVal)                
+                pixVal = np.mean(avgVal,axis=0)
                 
             interpImg[row,colm] = pixVal
             
@@ -135,8 +135,12 @@ def imgTransform(img,pts1,pts2):
     return transfImg   
  
 #Rotate
-def imgRotate(img,rotAng,origin):
+def imgRotate(img,rotAng,origin=None):
     imgSize = np.shape(img)
+    
+    if origin == None:
+        origin = [int(round((imgSize[0]-1)/2)),int(round((imgSize[1]-1)/2))]
+        
     rotImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
     
     for row in range(imgSize[0]):
@@ -148,8 +152,8 @@ def imgRotate(img,rotAng,origin):
             
             rotLoc = mf.vec2vec([row2or,colm2or],rotAng)
             
-            rotRow = int(origin[0]-rotLoc[0])
-            rotColm = int(origin[1]+rotLoc[1])
+            rotRow = round(origin[0]-rotLoc[0])
+            rotColm = round(origin[1]+rotLoc[1])
             
             if rotRow >= 0 and rotRow < imgSize[0] and rotColm >= 0 and rotColm < imgSize[1]:
                 rotImg[rotRow,rotColm] = pixVal
@@ -157,8 +161,12 @@ def imgRotate(img,rotAng,origin):
     return rotImg
 
 #Translate
-def imgTranslate(img,transVector,origin): 
-    imgSize = np.shape(img)    
+def imgTranslate(img,transVector,origin=None): 
+    imgSize = np.shape(img)
+    
+    if origin == None:
+        origin = [int(round((imgSize[0]-1)/2)),int(round((imgSize[1]-1)/2))]
+        
     transImg = np.zeros((imgSize[0],imgSize[1])).astype(int) if len(imgSize) == 2 else np.zeros((imgSize[0],imgSize[1],imgSize[2])).astype(int)
     transOrigin = [origin[0]+transVector[0],origin[1]+transVector[1]]
     
@@ -170,7 +178,12 @@ def imgTranslate(img,transVector,origin):
             if transRow >= 0 and transRow < imgSize[0] and transColm >= 0 and transColm < imgSize[1]:
                 transImg[transRow,transColm] = img[row,colm]
 
-    return [transImg,transOrigin]
+    return transImg
+
+def imgStack(imgs,channels=3):
+    stackImg = np.median(imgs,axis=0)
+    
+    return stackImg
 
 ###############################################################################
 
