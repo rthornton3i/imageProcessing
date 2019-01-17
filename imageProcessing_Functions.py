@@ -184,37 +184,3 @@ def imgStack(imgs,channels=3):
     stackImg = np.median(imgs,axis=0)
     
     return stackImg
-
-###############################################################################
-
-#Convert to Binary (0/1)
-def imgBinary(img,digits=8):
-    imgSize = np.shape(img)
-    numEl = np.prod(imgSize)
-    
-    img = np.reshape(img,[1,numEl])
-
-    imgBin = []
-    for index,value in enumerate(img[0]):
-        dec2bin = bin(value)[2:]
-        imgBin.append(dec2bin)
-    
-    maxDig = len(max(imgBin,key=len)) 
-    if maxDig > digits:
-        digits = maxDig
-    
-    for index,value in enumerate(imgBin):
-        imgBin[index] = str(value).zfill(digits)
-        
-    return imgBin
-
-#Convert to Decimal
-def imgDecimal(img,imgSize):
-    imgDec = []
-    for index,value in enumerate(img):
-        bin2dec = int(value,2)
-        imgDec.append(bin2dec)
-    
-    imgDec = np.reshape(imgDec,[imgSize[0],imgSize[1],imgSize[2]])
-    
-    return imgDec
