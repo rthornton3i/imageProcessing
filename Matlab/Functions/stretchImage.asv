@@ -1,0 +1,5 @@
+function img = stretchImage(img,scales)
+    img(img<scales(1)) = 0;
+    img(img>scales(2)) = 1;
+    img = rescale(img,scales(1),scales(2));
+end

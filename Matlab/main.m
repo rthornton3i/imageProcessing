@@ -9,7 +9,12 @@ file = Tiff('Andromeda.TIF','r');
 img = im2double(read(file));
 stretchedImg = imadjust(img,stretchlim(img),[]);
 
-imshow(stretchedImg);
+subplot(2,1,1)
+histogram(img)
+subplot(2,1,2)
+histogram(stretchedImg)
+
+% imshow(stretchedImg);
 % pts1 = [240,333;221,1141;638,793];
 % pts2 = [97,81;95,1117;797,807];
 % 
